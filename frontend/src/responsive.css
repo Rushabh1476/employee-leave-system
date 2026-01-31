@@ -1,0 +1,35 @@
+/* Default (Laptop / Desktop) */
+/*css file*/
+
+.login-box {
+  width: 400px;
+  margin: auto;
+  margin-top: 100px;
+}
+
+/* Mobile screen */
+@media (max-width: 600px) {
+  .login-box {
+    width: 90%;
+    margin-top: 50px;
+  }
+}
+
+/* Tablet screen */
+@media (min-width: 601px) and (max-width: 900px) {
+  .login-box {
+    width: 70%;
+    margin-top: 80px;
+  }
+}
+/* Mobile table scroll fix */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-scroll table {
+  min-width: 600px; /* table ko break hone se bachata hai */
+}
+
+
