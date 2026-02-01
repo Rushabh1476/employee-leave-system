@@ -24,7 +24,7 @@ function App() {
 
   const logout = () => {
     localStorage.removeItem("loggedUser");
-    setUser(null); localStorage.removeItem("user");
+    setUser(null);localStorage.removeItem("user"); localStorage.removeItem("user");
   };
 
   return (
