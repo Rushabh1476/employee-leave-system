@@ -1,190 +1,62 @@
-// ======================= LeaveHistory.js =======================
 import React, { useState } from "react";
-
-function LeaveHistory({
-  leaves = [],
-  isAdmin = false,
-  isEmployee = false,
-  isAdminHistory = false,
-  updateStatus,
-  onDelete,
-  onAdminDelete
-}) {
-  // Button hover states ke liye local management
+function LeaveHistory({ leaves = [], isAdmin, isEmployee, isAdminHistory, updateStatus, onDelete, onAdminDelete }) {
   const [hoveredId, setHoveredId] = useState(null);
-
-  const getStatusStyle = (status) => {
-    const base = {
-      padding: "6px 15px",
-      borderRadius: "10px",
-      fontSize: "16px",
-      fontWeight: "bold",
-      color: "#fff",
-      display: "inline-block",
-      minWidth: "100px",
-      textAlign: "center"
-    };
-
-    if (status === "Approved") return { ...base, background: "#FFD700", color: "#000" }; // ✅ Yellow
-    if (status === "Rejected") return { ...base, background: "#EF5350" }; // ✅ Light Red
-    return { ...base, background: "#2196F3" }; // Pending Blue
+  const getStatusStyle = (s) => {
+    const b = { padding: "6px 15px", borderRadius: "10px", fontSize: "14px", fontWeight: "bold", color: "#fff", display: "inline-block", minWidth: "90px", textAlign: "center" };
+    if (s === "Approved") return { ...b, background: "#FFD700", color: "#000" };
+    if (s === "Rejected") return { ...b, background: "#EF5350" };
+    return { ...b, background: "#2196F3" };
   };
-
-  const openImage = (src) => {
-    if (!src) return;
-    const imgWindow = window.open("", "_blank");
-    imgWindow.document.write(
-      `<html><head><title>Proof</title></head>
-       <body style="margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#000;">
-       <img src="${src}" style="max-width:100%;max-height:100%;object-fit:contain;" />
-       </body></html>`
-    );
-    imgWindow.document.close();
-  };
-
-  // Helper for Dark Red Delete Color
-  const deleteBtnStyle = (id, type) => ({
-    background: hoveredId === `${id}-${type}` ? "#8e0000" : "#c62828", // ✅ Dark Red
-    color: "white",
-    border: "none",
-    padding: "6px 10px",
-    borderRadius: "4px",
-    cursor: "pointer",
-    transition: "0.3s ease",
-    marginLeft: type === "adminHistory" ? "6px" : "0"
-  });
-
+  const delStyle = (id, t) => ({ background: hoveredId === `${id}-${t}` ? "#8e0000" : "#c62828", color: "white", border: "none", padding: "6px 10px", borderRadius: "4px", cursor: "pointer", transition: "0.3s" });
   return (
-    <div>
-      <h3 style={{ textAlign: "center" }}>Leave History</h3>
-<div className="table-scroll">
-      <table
-        width="100%"
-        cellPadding="10"
-        style={{ borderCollapse: "collapse", textAlign: "center" }}
-      >
-        <thead style={{ background: "#eaeaea" }}>
-          <tr>
-            <th>Employee</th>
-            <th>Date</th>
-            <th>Days</th>
-            <th>Reason</th>
-            <th>Proof</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {leaves.length === 0 ? (
+    <div style={{ marginTop: "20px" }}>
+      <h3 style={{ textAlign: "center", marginBottom: "15px" }}>Leave Applications</h3>
+      <div style={{ overflowX: "auto" }}>
+        <table width="100%" style={{ borderCollapse: "collapse", background: "#fff" }}>
+          <thead style={{ background: "#f5f5f5" }}>
             <tr>
-              <td colSpan="7">No Records</td>
+              <th style={{ padding: "12px", borderBottom: "2px solid #ddd" }}>Employee</th>
+              <th style={{ padding: "12px", borderBottom: "2px solid #ddd" }}>Date</th>
+              <th style={{ padding: "12px", borderBottom: "2px solid #ddd" }}>Reason</th>
+              <th style={{ padding: "12px", borderBottom: "2px solid #ddd" }}>Proof</th>
+              <th style={{ padding: "12px", borderBottom: "2px solid #ddd" }}>Status</th>
+              <th style={{ padding: "12px", borderBottom: "2px solid #ddd" }}>Action</th>
             </tr>
-          ) : (
-            leaves.map((leave) => (
-              <tr key={leave.id} style={{ borderBottom: "1px solid #ccc" }}>
-                <td>{leave.employeeName || "—"}</td>
-                <td>{leave.date || "—"}</td>
-                <td>{leave.days}</td>
-                <td>{leave.reason}</td>
-                <td>
-                  {leave.proof ? (
-                    <img
-                      src={leave.proof}
-                      alt="proof"
-                      style={{
-                        width: "70px",
-                        height: "70px",
-                        objectFit: "cover",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        border: "1px solid #ddd"
-                      }}
-                      onClick={() => openImage(leave.proof)}
-                    />
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                <td>
-                  {/* ✅ Status with Colors */}
-                  <span style={getStatusStyle(leave.status)}>
-                    {leave.status}
-                  </span>
-                </td>
-                <td>
-                  {/* ✅ Is line ko dhyan se dekho, yahan div add kiya hai */}
-{isAdmin && leave.status?.toUpperCase() === "PENDING" && (
-  <div style={{ display: "flex", gap: "5px", justifyContent: "center", alignItems: "center" }}>
-    <button
-      onClick={() => updateStatus(leave.id, "Approved")}
-      onMouseEnter={() => setHoveredId(`${leave.id}-app`)}
-      onMouseLeave={() => setHoveredId(null)}
-      style={{
-        background: hoveredId === `${leave.id}-app` ? "#ccac00" : "gold",
-        border: "none",
-        padding: "6px 8px", // Padding thodi kam ki hai taki mobile me fit aaye
-        borderRadius: "4px",
-        cursor: "pointer",
-        transition: "0.3s",
-        fontWeight: "600",
-        fontSize: "12px", // Mobile ke liye font size chota
-        whiteSpace: "nowrap" // Taki text niche na gire
-      }}
-    >
-      Approve
-    </button>
-    <button
-      onClick={() => updateStatus(leave.id, "Rejected")}
-      onMouseEnter={() => setHoveredId(`${leave.id}-rej`)}
-      onMouseLeave={() => setHoveredId(null)}
-      style={{
-        background: hoveredId === `${leave.id}-rej` ? "#e57373" : "#ffcdd2",
-        border: "none",
-        padding: "6px 8px",
-        borderRadius: "4px",
-        cursor: "pointer",
-        transition: "0.3s",
-        fontWeight: "600",
-        fontSize: "12px",
-        whiteSpace: "nowrap"
-      }}
-    >
-      Reject
-    </button>
-  </div>
-)}
-
-                  {isEmployee && (
-                    <button
-                      onClick={() => onDelete(leave.id)}
-                      onMouseEnter={() => setHoveredId(`${leave.id}-empDel`)}
-                      onMouseLeave={() => setHoveredId(null)}
-                      style={deleteBtnStyle(leave.id, "empDel")}
-                    >
-                      Delete
-                    </button>
-                  )}
-
-                  {isAdminHistory && (
-                    <button
-                      onClick={() => onAdminDelete(leave.id)}
-                      onMouseEnter={() => setHoveredId(`${leave.id}-adminHistory`)}
-                      onMouseLeave={() => setHoveredId(null)}
-                      style={deleteBtnStyle(leave.id, "adminHistory")}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {leaves.length === 0 ? (
+              <tr><td colSpan="6" style={{ padding: "20px", color: "#888" }}>No leave records found.</td></tr>
+            ) : (
+              leaves.map((l) => (
+                <tr key={l.id} style={{ borderBottom: "1px solid #eee", textAlign: "center" }}>
+                  <td style={{ padding: "12px" }}>{l.employeeName}</td>
+                  <td style={{ padding: "12px" }}>{l.date}</td>
+                  <td style={{ padding: "12px" }}>{l.reason}</td>
+                  <td style={{ padding: "12px" }}>
+                    {l.proof ? <img src={l.proof} alt="p" style={{ width: "50px", height: "50px", objectFit: "cover", cursor: "pointer", borderRadius: "4px" }} onClick={() => window.open(l.proof, "_blank")} /> : "�"}
+                  </td>
+                  <td style={{ padding: "12px" }}><span style={getStatusStyle(l.status)}>{l.status}</span></td>
+                  <td style={{ padding: "12px" }}>
+                    {isAdmin && l.status === "Pending" && (
+                      <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
+                        <button onClick={() => updateStatus(l.id, "Approved")} style={{ background: "gold", border: "none", padding: "5px 10px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>Approve</button>
+                        <button onClick={() => updateStatus(l.id, "Rejected")} style={{ background: "#ffcdd2", border: "none", padding: "5px 10px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>Reject</button>
+                      </div>
+                    )}
+                    {isEmployee && (
+                      <button onClick={() => onDelete(l.id)} onMouseEnter={() => setHoveredId(`${l.id}-e`)} onMouseLeave={() => setHoveredId(null)} style={delStyle(l.id, "e")}>Delete</button>
+                    )}
+                    {isAdminHistory && (
+                      <button onClick={() => onAdminDelete(l.id)} onMouseEnter={() => setHoveredId(`${l.id}-a`)} onMouseLeave={() => setHoveredId(null)} style={delStyle(l.id, "a")}>Delete</button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
-
 export default LeaveHistory;
