@@ -11,19 +11,19 @@ function Dashboard({ user, logout }) {
   const isEmp = u?.role === "EMPLOYEE";
   const isAdmin = u?.role === "ADMIN";
   useEffect(() => {
-    const fetchLeaves = () => {
-      const stored = JSON.parse(localStorage.getItem("user") || "{}");
-      const name = u?.username || stored.username;
+    const fetchData = () => {
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const name = u?.username || storedUser.username;
       if (isEmp && name) {
-        LeaveService.getEmployeeLeaves(name).then((res) => { if(res.data) setLeaves(res.data); }).catch(console.error);
+        LeaveService.getEmployeeLeaves(name).then((res) => setLeaves(res.data || [])).catch(console.error);
       }
       if (isAdmin) {
-        LeaveService.getAllLeaves().then((res) => { if(res.data) setAllHistory(res.data); }).catch(console.error);
+        LeaveService.getAllLeaves().then((res) => setAllHistory(res.data || [])).catch(console.error);
       }
     };
-    fetchLeaves();
-    if(isAdmin) { const inv = setInterval(fetchLeaves, 3000); return () => clearInterval(inv); }
-  }, [isEmp, isAdmin, u]);
+    fetchData();
+    if (isAdmin) { const inv = setInterval(fetchData, 4000); return () => clearInterval(inv); }
+  }, [isEmp, isAdmin, u.username]);
   const addLeave = (s) => setLeaves((p) => [...p, s]);
   const updateStatus = (id, s) => {
     (s === "Approved" ? LeaveService.approveLeave(id) : LeaveService.rejectLeave(id)).then(() => {
