@@ -14,9 +14,9 @@ function Dashboard({ user, logout }) {
   const isEmployee = currentUser?.role === "EMPLOYEE";
   useEffect(() => {
     if (isEmployee && currentUser?.username) {
-      LeaveService.getEmployeeLeaves(currentUser.username).then((res) => {
+      LeaveService.getEmployeeLeaves(currentcurrentUser.username).then((res) => {
         const deletedIds = getLS("EMP_DELETED_IDS");
-        const data = (res.data || []).map((l) => ({ ...l, id: l.id, employeeName: l.employeeName || currentUser.username, date: l.date || "", status: l.status || "Pending", proof: l.proof })).filter((l) => !deletedIds.includes(l.id));
+        const data = (res.data || []).map((l) => ({ ...l, id: l.id, employeeName: l.employeeName || currentcurrentUser.username, date: l.date || "", status: l.status || "Pending", proof: l.proof })).filter((l) => !deletedIds.includes(l.id));
         setLeaves(data);
       }).catch(console.error);
     }
@@ -35,7 +35,7 @@ function Dashboard({ user, logout }) {
     return () => clearInterval(interval);
   }, [isAdmin]);
   const addLeave = (savedLeave) => {
-    const normalized = { ...savedLeave, employeeName: savedLeave.employeeName || currentUser.username, date: savedLeave.date || "", status: savedLeave.status || "Pending", proof: savedLeave.proof };
+    const normalized = { ...savedLeave, employeeName: savedLeave.employeeName || currentcurrentUser.username, date: savedLeave.date || "", status: savedLeave.status || "Pending", proof: savedLeave.proof };
     setLeaves((p) => [...p, normalized]);
     setAllHistory((p) => [...p, normalized]);
   };
@@ -67,7 +67,7 @@ function Dashboard({ user, logout }) {
           <div style={{ textAlign: "center" }}>
             <div style={{ padding: "28px", borderRadius: "16px", marginBottom: "25px", background: "linear-gradient(135deg,#2c3e50,#4ca1af)", color: "#fff" }}>
               <h1>Employee Dashboard</h1>
-              <p style={{ fontSize: "28px", fontWeight: "800" }}>Welcome <span style={{ background: "linear-gradient(90deg,#ffeb3b,#00e5ff,#ff4081)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{currentUser.username}??</span></p>
+              <p style={{ fontSize: "28px", fontWeight: "800" }}>Welcome <span style={{ background: "linear-gradient(90deg,#ffeb3b,#00e5ff,#ff4081)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{currentcurrentUser.username}??</span></p>
             </div>
             <LeaveForm addLeave={addLeave} />
             <LeaveHistory leaves={leaves} isEmployee onDelete={deleteEmployeeLeave} />
@@ -77,7 +77,7 @@ function Dashboard({ user, logout }) {
           <div>
             <div style={{ padding: "22px", borderRadius: "12px", marginBottom: "25px", background: "#ffffff", border: "1px solid #e0e0e0", textAlign: "center" }}>
               <h1>Admin Dashboard</h1>
-              <p>Welcome <strong>{currentUser.username}</strong></p>
+              <p>Welcome <strong>{currentcurrentUser.username}</strong></p>
             </div>
             <button onClick={() => setShowAllHistory(!showAllHistory)} style={{ marginBottom: "20px", padding: "10px 20px", borderRadius: "6px", background: "#ffffff", color: "#1976d2", border: "1px solid #1976d2", cursor: "pointer", fontWeight: "600" }}>{showAllHistory ? "Current Leaves" : "All History"}</button>
             <LeaveHistory leaves={showAllHistory ? allHistory : pendingLeaves} isAdmin={!showAllHistory} isAdminHistory={showAllHistory} updateStatus={updateStatus} onAdminDelete={deleteAdminLeave} />
