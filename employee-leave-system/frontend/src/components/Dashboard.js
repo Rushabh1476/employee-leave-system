@@ -1,5 +1,3 @@
-//dashobord code 
-
 import React, { useEffect, useState } from "react";
 import LeaveForm from "./LeaveForm";
 import LeaveHistory from "./LeaveHistory";
@@ -14,29 +12,34 @@ function Dashboard({ user, logout }) {
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [isLogoutHover, setIsLogoutHover] = useState(false);
 
-  const isAdmin = user?.role === "ADMIN";
-  const isEmployee = user?.role === "EMPLOYEE";
+  // REFRESH FIX: Agar props wala user khali hai, toh localStorage se uthao
+  const currentUser = user || JSON.parse(localStorage.getItem("user") || "{}");
+  
+  const isAdmin = currentUser?.role === "ADMIN";
+  const isEmployee = currentUser?.role === "EMPLOYEE";
 
   useEffect(() => {
-    if (isEmployee && user?.username) {
-      LeaveService.getEmployeeLeaves(user.username)
+    // HISTORY FIX: currentUser.username use kar rahe hain taaki refresh par data na ude
+    if (isEmployee && currentUser?.username) {
+      LeaveService.getEmployeeLeaves(currentUser.username)
         .then((res) => {
           const deletedIds = getLS("EMP_DELETED_IDS");
           const data = (res.data || [])
             .map((l) => ({
               ...l,
               id: l.id,
-              employeeName: l.employeeName || user.username,
+              employeeName: l.employeeName || currentUser.username,
               date: l.date || "",
               status: l.status || "Pending",
-              proof: `http://localhost:8080/uploads/${l.employeeName || user.username}_${l.date}.jpg`
+              // IMAGE FIX: Ab seedha l.proof use hoga, localhost ka jhanjhat khatam
+              proof: l.proof 
             }))
             .filter((l) => !deletedIds.includes(l.id));
           setLeaves(data);
         })
         .catch(console.error);
     }
-  }, [isEmployee, user]);
+  }, [isEmployee, currentUser]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -46,6 +49,7 @@ function Dashboard({ user, logout }) {
           const adminDeleted = getLS("ADMIN_DELETED_IDS");
           const data = (res.data || []).map(l => ({
               ...l,
+              // IMAGE FIX: Admin side ke liye bhi base64 proof
               proof: l.proof
           })).filter((l) => !adminDeleted.includes(l.id));
           setAllHistory(data);
@@ -60,10 +64,11 @@ function Dashboard({ user, logout }) {
   const addLeave = (savedLeave) => {
     const normalized = {
       ...savedLeave,
-      employeeName: savedLeave.employeeName || user.username,
+      employeeName: savedLeave.employeeName || currentUser.username,
       date: savedLeave.date || "",
       status: savedLeave.status || "Pending",
-      proof: `http://localhost:8080/uploads/${savedLeave.employeeName || user.username}_${savedLeave.date}.jpg`
+      // IMAGE FIX: Naya leave add hote hi sahi image dikhegi
+      proof: savedLeave.proof 
     };
     setLeaves((p) => [...p, normalized]);
     setAllHistory((p) => [...p, normalized]);
@@ -95,24 +100,15 @@ function Dashboard({ user, logout }) {
     <div style={{ 
         minHeight: "100vh", 
         padding: "30px",
-        // ✅ Simple Professional Office Background
         backgroundImage: "url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2069')",
         backgroundSize: "cover",
         backgroundAttachment: "fixed",
         backgroundPosition: "center"
     }}>
       <div style={{ maxWidth: "1200px", margin: "auto", background: "rgba(255, 255, 255, 0.95)", padding: "25px", borderRadius: "12px", boxShadow: "0 8px 20px rgba(0,0,0,0.15)" }}>
-       <div
-  style={{
-    display: "flex",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    marginBottom: "20px"   // ✅ FIX: har screen me gap
-  }}
->
-  
+       <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: "20px" }}>
           <button 
-           className="logout-btn"
+            className="logout-btn"
             onMouseEnter={() => setIsLogoutHover(true)}
             onMouseLeave={() => setIsLogoutHover(false)}
             onClick={logout} 
@@ -136,14 +132,14 @@ function Dashboard({ user, logout }) {
             <div style={{ maxWidth: "900px", width: "100%" }}>
               <div style={{ textAlign: "center", padding: "28px", borderRadius: "16px", marginBottom: "25px", background: "linear-gradient(135deg,#2c3e50,#4ca1af)", color: "#fff" }}>
                 <h1>Employee Dashboard</h1>
-                <p style={{ fontSize: "28px", fontWeight: "800" }}>Welcome <span style={{ background: "linear-gradient(90deg,#ffeb3b,#00e5ff,#ff4081)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{user.username}💕</span></p>
+                <p style={{ fontSize: "28px", fontWeight: "800" }}>Welcome <span style={{ background: "linear-gradient(90deg,#ffeb3b,#00e5ff,#ff4081)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{currentUser.username}💕</span></p>
               </div>
               <LeaveForm addLeave={addLeave} />
               <LeaveHistory 
                 leaves={leaves} 
                 isEmployee 
                 onDelete={deleteEmployeeLeave} 
-                statusStyles={{ Approved: "#FFD700", Rejected: "#FF4D4D" }} // Colors passed
+                statusStyles={{ Approved: "#FFD700", Rejected: "#FF4D4D" }} 
               />
             </div>
           </div>
@@ -154,7 +150,7 @@ function Dashboard({ user, logout }) {
             <div style={{ maxWidth: "1000px", width: "100%" }}>
               <div style={{ padding: "22px", borderRadius: "12px", marginBottom: "25px", background: "#ffffff", border: "1px solid #e0e0e0", textAlign: "center" }}>
                 <h1 style={{ fontSize: "28px", color: "#263238" }}>Admin Dashboard</h1>
-                <p style={{ fontSize: "18px", color: "#546e7a" }}>Welcome <strong>{user.username}</strong></p>
+                <p style={{ fontSize: "18px", color: "#546e7a" }}>Welcome <strong>{currentUser.username}</strong></p>
               </div>
               <button onClick={() => setShowAllHistory(!showAllHistory)} style={{ marginBottom: "20px", padding: "10px 20px", borderRadius: "6px", background: "#ffffff", color: "#1976d2", border: "1px solid #1976d2", cursor: "pointer", fontWeight: "600" }}>{showAllHistory ? "Current Leaves" : "All History"}</button>
               <LeaveHistory 
@@ -163,7 +159,7 @@ function Dashboard({ user, logout }) {
                 isAdminHistory={showAllHistory} 
                 updateStatus={updateStatus} 
                 onAdminDelete={deleteAdminLeave} 
-                statusStyles={{ Approved: "#FFD700", Rejected: "#FF4D4D" }} // Colors passed
+                statusStyles={{ Approved: "#FFD700", Rejected: "#FF4D4D" }} 
               />
             </div>
           </div>
