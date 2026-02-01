@@ -6,7 +6,7 @@ import "./responsive.css";
 
 
 function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user")));
 
   // 🔹 Load logged-in user
   useEffect(() => {
@@ -24,7 +24,7 @@ function App() {
 
   const logout = () => {
     localStorage.removeItem("loggedUser");
-    setUser(null);
+    setUser(null); localStorage.removeItem("user");
   };
 
   return (
@@ -39,3 +39,4 @@ function App() {
 }
 
 export default App;
+
