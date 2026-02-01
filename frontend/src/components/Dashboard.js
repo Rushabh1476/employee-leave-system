@@ -12,12 +12,13 @@ function Dashboard({ user, logout }) {
   const isAdmin = u?.role === "ADMIN";
   useEffect(() => {
     const fetchLeaves = () => {
-      const username = u?.username || JSON.parse(localStorage.getItem("user") || "{}").username;
-      if (isEmp && username) {
-        LeaveService.getEmployeeLeaves(username).then((res) => setLeaves(res.data || [])).catch(console.error);
+      const stored = JSON.parse(localStorage.getItem("user") || "{}");
+      const name = u?.username || stored.username;
+      if (isEmp && name) {
+        LeaveService.getEmployeeLeaves(name).then((res) => { if(res.data) setLeaves(res.data); }).catch(console.error);
       }
       if (isAdmin) {
-        LeaveService.getAllLeaves().then((res) => setAllHistory(res.data || [])).catch(console.error);
+        LeaveService.getAllLeaves().then((res) => { if(res.data) setAllHistory(res.data); }).catch(console.error);
       }
     };
     fetchLeaves();
