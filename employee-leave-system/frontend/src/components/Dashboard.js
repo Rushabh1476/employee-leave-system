@@ -46,7 +46,7 @@ function Dashboard({ user, logout }) {
           const adminDeleted = getLS("ADMIN_DELETED_IDS");
           const data = (res.data || []).map(l => ({
               ...l,
-              proof: `http://localhost:8080/uploads/${l.employeeName}_${l.date}.jpg`
+              proof: l.proof
           })).filter((l) => !adminDeleted.includes(l.id));
           setAllHistory(data);
         })
