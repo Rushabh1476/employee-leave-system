@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import LeaveForm from "./LeaveForm";
 import LeaveHistory from "./LeaveHistory";
 import LeaveService from "../services/LeaveService";
-const getLS = (key) => JSON.parse(localStorage.getItem(key) || "[]");
-const setLS = (key, val) => localStorage.setItem(key, JSON.stringify(val));
+const getLS = (k) => JSON.parse(localStorage.getItem(k) || "[]");
+const setLS = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 function Dashboard({ user, logout }) {
   const [leaves, setLeaves] = useState([]);
   const [allHistory, setAllHistory] = useState([]);
@@ -13,11 +13,11 @@ function Dashboard({ user, logout }) {
   const isAdmin = u?.role === "ADMIN";
   const isEmployee = u?.role === "EMPLOYEE";
   useEffect(() => {
-    if (isEmployee && u?.username) {
-      LeaveService.getEmployeeLeaves(u.username).then((res) => {
+    const username = u?.username || JSON.parse(localStorage.getItem("user") || "{}").username;
+    if (isEmployee && username) {
+      LeaveService.getEmployeeLeaves(username).then((res) => {
         const deletedIds = getLS("EMP_DELETED_IDS");
-        const data = (res.data || []).map((l) => ({ ...l, id: l.id, employeeName: l.employeeName || u.username, date: l.date || "", status: l.status || "Pending", proof: l.proof })).filter((l) => !deletedIds.includes(l.id));
-        setLeaves(data);
+        setLeaves((res.data || []).filter((l) => !deletedIds.includes(l.id)));
       }).catch(console.error);
     }
   }, [isEmployee, u]);
@@ -26,42 +26,33 @@ function Dashboard({ user, logout }) {
     const load = () => {
       LeaveService.getAllLeaves().then((res) => {
         const adminDeleted = getLS("ADMIN_DELETED_IDS");
-        const data = (res.data || []).map(l => ({ ...l, proof: l.proof })).filter((l) => !adminDeleted.includes(l.id));
-        setAllHistory(data);
+        setAllHistory((res.data || []).filter((l) => !adminDeleted.includes(l.id)));
       }).catch(console.error);
     };
     load();
     const interval = setInterval(load, 3000);
     return () => clearInterval(interval);
   }, [isAdmin]);
-  const addLeave = (savedLeave) => {
-    const normalized = { ...savedLeave, employeeName: savedLeave.employeeName || u.username, date: savedLeave.date || "", status: savedLeave.status || "Pending", proof: savedLeave.proof };
-    setLeaves((p) => [...p, normalized]);
-    setAllHistory((p) => [...p, normalized]);
-  };
+  const addLeave = (s) => setLeaves((p) => [...p, s]);
   const updateStatus = (id, status) => {
-    const api = status === "Approved" ? LeaveService.approveLeave(id) : LeaveService.rejectLeave(id);
-    api.then(() => {
+    (status === "Approved" ? LeaveService.approveLeave(id) : LeaveService.rejectLeave(id)).then(() => {
       setAllHistory((p) => p.map((l) => (l.id === id ? { ...l, status } : l)));
       setLeaves((p) => p.map((l) => (l.id === id ? { ...l, status } : l)));
     });
   };
   const deleteEmployeeLeave = (id) => {
-    const ids = getLS("EMP_DELETED_IDS");
-    setLS("EMP_DELETED_IDS", [...ids, id]);
+    setLS("EMP_DELETED_IDS", [...getLS("EMP_DELETED_IDS"), id]);
     setLeaves((p) => p.filter((l) => l.id !== id));
   };
   const deleteAdminLeave = (id) => {
-    const ids = getLS("ADMIN_DELETED_IDS");
-    setLS("ADMIN_DELETED_IDS", [...ids, id]);
+    setLS("ADMIN_DELETED_IDS", [...getLS("ADMIN_DELETED_IDS"), id]);
     setAllHistory((p) => p.filter((l) => l.id !== id));
   };
-  const pendingLeaves = allHistory.filter((l) => l.status?.toUpperCase() === "PENDING");
   return (
-    <div style={{ minHeight: "100vh", padding: "30px", backgroundImage: "url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2069')", backgroundSize: "cover", backgroundAttachment: "fixed", backgroundPosition: "center" }}>
+    <div style={{ minHeight: "100vh", padding: "30px", backgroundImage: "url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2069')", backgroundSize: "cover", backgroundAttachment: "fixed" }}>
       <div style={{ maxWidth: "1200px", margin: "auto", background: "rgba(255, 255, 255, 0.95)", padding: "25px", borderRadius: "12px", boxShadow: "0 8px 20px rgba(0,0,0,0.15)" }}>
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
-          <button onClick={logout} onMouseEnter={() => setIsLogoutHover(true)} onMouseLeave={() => setIsLogoutHover(false)} style={{ padding: "8px 18px", borderRadius: "6px", background: isLogoutHover ? "#b71c1c" : "#e53935", color: "#fff", border: "none", cursor: "pointer", fontWeight: "600", transition: "0.3s ease" }}>Logout</button>
+          <button onClick={logout} onMouseEnter={()=>setIsLogoutHover(true)} onMouseLeave={()=>setIsLogoutHover(false)} style={{ padding: "8px 18px", borderRadius: "6px", background: isLogoutHover ? "#b71c1c" : "#e53935", color: "#fff", border: "none", cursor: "pointer", fontWeight: "600" }}>Logout</button>
         </div>
         {isEmployee && (
           <div style={{ textAlign: "center" }}>
@@ -80,7 +71,7 @@ function Dashboard({ user, logout }) {
               <p>Welcome <strong>{u.username}</strong></p>
             </div>
             <button onClick={() => setShowAllHistory(!showAllHistory)} style={{ marginBottom: "20px", padding: "10px 20px", borderRadius: "6px", background: "#ffffff", color: "#1976d2", border: "1px solid #1976d2", cursor: "pointer", fontWeight: "600" }}>{showAllHistory ? "Current Leaves" : "All History"}</button>
-            <LeaveHistory leaves={showAllHistory ? allHistory : pendingLeaves} isAdmin={!showAllHistory} isAdminHistory={showAllHistory} updateStatus={updateStatus} onAdminDelete={deleteAdminLeave} />
+            <LeaveHistory leaves={showAllHistory ? allHistory : allHistory.filter(l=>l.status==="Pending")} isAdmin={!showAllHistory} isAdminHistory={showAllHistory} updateStatus={updateStatus} onAdminDelete={deleteAdminLeave} />
           </div>
         )}
       </div>
