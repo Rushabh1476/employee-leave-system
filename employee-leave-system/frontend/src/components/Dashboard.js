@@ -14,30 +14,32 @@ function Dashboard({ user, logout }) {
   const isEmployee = currentUser?.role === "EMPLOYEE";
   const username = currentUser?.username;
 
-  // Load employee leaves
+  // Load employee leaves by fetching all leaves and filtering client-side.
+  // This avoids 500 errors from the employee-specific endpoint on some deployments.
   useEffect(() => {
     if (!isEmployee || !username) return;
 
     const loadLeaves = () => {
-      LeaveService.getEmployeeLeaves(username)
+      LeaveService.getAllLeaves()
         .then((res) => {
-          const data = (res.data || []).map((l) => ({
-            ...l,
-            id: l.id,
-            employeeName: l.employeeName || username,
-            date: l.date || "",
-            status: l.status || "PENDING",
-            proof: l.proof
-          }));
-          setLeaves(data);
+          const all = res.data || [];
+          const filtered = all
+            .filter((l) => (l.employeeName || "").toLowerCase() === (username || "").toLowerCase())
+            .map((l) => ({
+              ...l,
+              id: l.id,
+              employeeName: l.employeeName || username,
+              date: l.date || "",
+              status: l.status || "PENDING",
+              proof: l.proof
+            }));
+          setLeaves(filtered);
         })
-        .catch((err) => console.error("Error loading leaves:", err));
+        .catch((err) => console.error("Error loading leaves (fallback):", err));
     };
 
-    // Load immediately
+    // Load immediately and then poll
     loadLeaves();
-
-    // Poll every 2 seconds
     const interval = setInterval(loadLeaves, 2000);
     return () => clearInterval(interval);
   }, [isEmployee, username]);
