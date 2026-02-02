@@ -9,7 +9,7 @@ function LeaveForm({ addLeave }) {
   const [isSubmitHover, setIsSubmitHover] = useState(false); // Hover State
 
   // LocalStorage se logged user nikalna
-  const loggedUser = JSON.parse(localStorage.getItem("loggedUser") || "{}");
+  const loggedUser = JSON.parse(localStorage.getItem("user") || "{}");
 
   // File ko Base64 mein badalne ka function
   const handleFileChange = (e) => {
@@ -38,14 +38,18 @@ function LeaveForm({ addLeave }) {
         date: date,
         days: Number(days),
         reason: reason,
-        proof: proof, // Backend ise folder mein save karega
+        proof: proof,
         status: "PENDING"
       };
 
       const res = await LeaveService.applyLeave(payload);
       
-      // Dashboard state update karne ke liye
-      addLeave(res.data);
+      console.log("Leave saved:", res.data);
+      
+      // Dashboard state update karne ke liye - with complete data
+      if (res.data) {
+        addLeave(res.data);
+      }
 
       alert("Leave Applied Successfully ✅");
 
@@ -56,8 +60,8 @@ function LeaveForm({ addLeave }) {
       setProof("");
 
     } catch (err) {
-      console.error(err);
-      alert("Error applying leave ❌");
+      console.error("Error:", err);
+      alert("Error applying leave: " + (err.response?.data?.message || err.message));
     }
   };
 

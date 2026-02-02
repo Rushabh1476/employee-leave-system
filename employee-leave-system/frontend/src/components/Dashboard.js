@@ -8,57 +8,69 @@ function Dashboard({ user, logout }) {
   const [allHistory, setAllHistory] = useState([]);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [isLogoutHover, setIsLogoutHover] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const currentUser = user || JSON.parse(localStorage.getItem("user") || "{}");
   const isAdmin = currentUser?.role === "ADMIN";
   const isEmployee = currentUser?.role === "EMPLOYEE";
 
+  // Initial load and refresh for employees
   useEffect(() => {
+    if (!isEmployee || !currentUser?.username) return;
+
     const fetchEmployeeLeaves = () => {
-      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const username = currentUser?.username || storedUser.username;
-      
-      if (isEmployee && username) {
-        LeaveService.getEmployeeLeaves(username)
-          .then((res) => {
-            const data = (res.data || []).map((l) => ({
-                ...l,
-                id: l.id,
-                employeeName: l.employeeName || username,
-                date: l.date || "",
-                status: l.status || "PENDING",
-                proof: l.proof 
-              }));
-            setLeaves(data);
-          }).catch(console.error);
-      }
+      LeaveService.getEmployeeLeaves(currentUser.username)
+        .then((res) => {
+          console.log("Fetched employee leaves:", res.data);
+          const data = (res.data || []).map((l) => ({
+              ...l,
+              id: l.id,
+              employeeName: l.employeeName || currentUser.username,
+              date: l.date || "",
+              status: l.status || "PENDING",
+              proof: l.proof 
+            }));
+          setLeaves(data);
+        })
+        .catch((err) => console.error("Error fetching employee leaves:", err));
     };
     
+    // Fetch immediately on mount
     fetchEmployeeLeaves();
-    const interval = setInterval(fetchEmployeeLeaves, 4000);
+    
+    // Then poll every 3 seconds
+    const interval = setInterval(fetchEmployeeLeaves, 3000);
     return () => clearInterval(interval);
-  }, [isEmployee, currentUser?.username]);
+  }, [isEmployee, currentUser?.username, refreshKey]);
 
+  // Admin data fetching
   useEffect(() => {
     if (!isAdmin) return;
     
     const loadAdminLeaves = () => {
       LeaveService.getAllLeaves()
         .then((res) => {
+          console.log("Fetched all leaves for admin:", res.data);
           const data = (res.data || []).map(l => ({
               ...l,
               proof: l.proof
           }));
           setAllHistory(data);
-        }).catch(console.error);
+        })
+        .catch((err) => console.error("Error fetching all leaves:", err));
     };
     
+    // Fetch immediately on mount
     loadAdminLeaves();
-    const interval = setInterval(loadAdminLeaves, 3000);
+    
+    // Then poll every 2 seconds
+    const interval = setInterval(loadAdminLeaves, 2000);
     return () => clearInterval(interval);
   }, [isAdmin]);
 
   const addLeave = (savedLeave) => {
+    console.log("Adding leave:", savedLeave);
+    
     const normalized = {
       ...savedLeave,
       employeeName: savedLeave.employeeName || currentUser.username,
@@ -66,19 +78,15 @@ function Dashboard({ user, logout }) {
       status: savedLeave.status || "PENDING",
       proof: savedLeave.proof 
     };
+    
+    // Add to local state immediately
     setLeaves((p) => [...p, normalized]);
     setAllHistory((p) => [...p, normalized]);
     
-    // Reload data from backend to ensure persistence
+    // Force a refresh from backend after 1 second
     setTimeout(() => {
-      LeaveService.getEmployeeLeaves(currentUser.username).then((res) => {
-        setLeaves(res.data || []);
-      }).catch(console.error);
-      
-      LeaveService.getAllLeaves().then((res) => {
-        setAllHistory(res.data || []);
-      }).catch(console.error);
-    }, 500);
+      setRefreshKey(prev => prev + 1);
+    }, 1000);
   };
 
   const updateStatus = (id, status) => {
