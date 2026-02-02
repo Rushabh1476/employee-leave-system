@@ -75,17 +75,38 @@ public class LeaveController {
 
     @GetMapping("/employee/{name}")
     public List<Leave> byEmployee(@PathVariable String name) {
-        return service.getEmployeeLeaves(name);
+        try {
+            if (name == null || name.isEmpty()) {
+                return List.of();
+            }
+            return service.getEmployeeLeaves(name);
+        } catch (Exception e) {
+            System.err.println("Error in byEmployee: " + e.getMessage());
+            e.printStackTrace();
+            return List.of();
+        }
     }
 
     @PutMapping("/{id}/approve")
     public Leave approveLeave(@PathVariable Long id) {
-        return service.updateStatus(id, "APPROVED");
+        try {
+            return service.updateStatus(id, "APPROVED");
+        } catch (Exception e) {
+            System.err.println("Error in approveLeave: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @PutMapping("/{id}/reject")
     public Leave rejectLeave(@PathVariable Long id) {
-        return service.updateStatus(id, "REJECTED");
+        try {
+            return service.updateStatus(id, "REJECTED");
+        } catch (Exception e) {
+            System.err.println("Error in rejectLeave: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @DeleteMapping("/{id}")
