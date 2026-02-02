@@ -3,9 +3,6 @@ import LeaveForm from "./LeaveForm";
 import LeaveHistory from "./LeaveHistory";
 import LeaveService from "../services/LeaveService";
 
-const getLS = (key) => JSON.parse(localStorage.getItem(key) || "[]");
-const setLS = (key, val) => localStorage.setItem(key, JSON.stringify(val));
-
 function Dashboard({ user, logout }) {
   const [leaves, setLeaves] = useState([]);
   const [allHistory, setAllHistory] = useState([]);
@@ -17,38 +14,47 @@ function Dashboard({ user, logout }) {
   const isEmployee = currentUser?.role === "EMPLOYEE";
 
   useEffect(() => {
-    if (isEmployee && currentUser?.username) {
-      LeaveService.getEmployeeLeaves(currentUser.username)
-        .then((res) => {
-          const deletedIds = getLS("EMP_DELETED_IDS");
-          const data = (res.data || []).map((l) => ({
-              ...l,
-              id: l.id,
-              employeeName: l.employeeName || currentUser.username,
-              date: l.date || "",
-              status: l.status || "Pending",
-              proof: l.proof 
-            })).filter((l) => !deletedIds.includes(l.id));
-          setLeaves(data);
-        }).catch(console.error);
-    }
-  }, [isEmployee, currentUser]);
+    const fetchEmployeeLeaves = () => {
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const username = currentUser?.username || storedUser.username;
+      
+      if (isEmployee && username) {
+        LeaveService.getEmployeeLeaves(username)
+          .then((res) => {
+            const data = (res.data || []).map((l) => ({
+                ...l,
+                id: l.id,
+                employeeName: l.employeeName || username,
+                date: l.date || "",
+                status: l.status || "PENDING",
+                proof: l.proof 
+              }));
+            setLeaves(data);
+          }).catch(console.error);
+      }
+    };
+    
+    fetchEmployeeLeaves();
+    const interval = setInterval(fetchEmployeeLeaves, 4000);
+    return () => clearInterval(interval);
+  }, [isEmployee, currentUser?.username]);
 
   useEffect(() => {
     if (!isAdmin) return;
-    const load = () => {
+    
+    const loadAdminLeaves = () => {
       LeaveService.getAllLeaves()
         .then((res) => {
-          const adminDeleted = getLS("ADMIN_DELETED_IDS");
           const data = (res.data || []).map(l => ({
               ...l,
               proof: l.proof
-          })).filter((l) => !adminDeleted.includes(l.id));
+          }));
           setAllHistory(data);
         }).catch(console.error);
     };
-    load();
-    const interval = setInterval(load, 3000);
+    
+    loadAdminLeaves();
+    const interval = setInterval(loadAdminLeaves, 3000);
     return () => clearInterval(interval);
   }, [isAdmin]);
 
@@ -57,11 +63,22 @@ function Dashboard({ user, logout }) {
       ...savedLeave,
       employeeName: savedLeave.employeeName || currentUser.username,
       date: savedLeave.date || "",
-      status: savedLeave.status || "Pending",
+      status: savedLeave.status || "PENDING",
       proof: savedLeave.proof 
     };
     setLeaves((p) => [...p, normalized]);
     setAllHistory((p) => [...p, normalized]);
+    
+    // Reload data from backend to ensure persistence
+    setTimeout(() => {
+      LeaveService.getEmployeeLeaves(currentUser.username).then((res) => {
+        setLeaves(res.data || []);
+      }).catch(console.error);
+      
+      LeaveService.getAllLeaves().then((res) => {
+        setAllHistory(res.data || []);
+      }).catch(console.error);
+    }, 500);
   };
 
   const updateStatus = (id, status) => {
@@ -69,19 +86,21 @@ function Dashboard({ user, logout }) {
     api.then(() => {
       setAllHistory((p) => p.map((l) => (l.id === id ? { ...l, status } : l)));
       setLeaves((p) => p.map((l) => (l.id === id ? { ...l, status } : l)));
-    });
+    }).catch(console.error);
   };
 
   const deleteEmployeeLeave = (id) => {
-    const ids = getLS("EMP_DELETED_IDS");
-    setLS("EMP_DELETED_IDS", [...ids, id]);
-    setLeaves((p) => p.filter((l) => l.id !== id));
+    LeaveService.deleteLeave(id).then(() => {
+      setLeaves((p) => p.filter((l) => l.id !== id));
+      setAllHistory((p) => p.filter((l) => l.id !== id));
+    }).catch(console.error);
   };
 
   const deleteAdminLeave = (id) => {
-    const ids = getLS("ADMIN_DELETED_IDS");
-    setLS("ADMIN_DELETED_IDS", [...ids, id]);
-    setAllHistory((p) => p.filter((l) => l.id !== id));
+    LeaveService.deleteLeave(id).then(() => {
+      setAllHistory((p) => p.filter((l) => l.id !== id));
+      setLeaves((p) => p.filter((l) => l.id !== id));
+    }).catch(console.error);
   };
 
   const pendingLeaves = allHistory.filter((l) => l.status?.toUpperCase() === "PENDING");

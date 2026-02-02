@@ -2,7 +2,6 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:8080/api/leaves";
 
-
 class LeaveService {
   getAllLeaves() {
     return axios.get(BASE_URL);
@@ -11,9 +10,10 @@ class LeaveService {
   applyLeave(leave) {
     return axios.post(BASE_URL, leave);
   }
-getEmployeeLeaves(name) {
-  return axios.get(`${BASE_URL}/employee/${name}`);
-}
+
+  getEmployeeLeaves(name) {
+    return axios.get(`${BASE_URL}/employee/${name}`);
+  }
 
   approveLeave(id) {
     return axios.put(`${BASE_URL}/${id}/approve`);
@@ -26,6 +26,7 @@ getEmployeeLeaves(name) {
   deleteLeave(id) {
     return axios.delete(`${BASE_URL}/${id}`);
   }
-}     
+}
 
-export default new LeaveService();
+const leaveService = new LeaveService();
+export default leaveService;

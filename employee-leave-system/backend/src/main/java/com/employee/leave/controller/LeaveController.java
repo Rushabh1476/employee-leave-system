@@ -78,9 +78,14 @@ public class LeaveController {
         return service.getEmployeeLeaves(name);
     }
 
-    @PutMapping("/{id}/{status}")
-    public Leave update(@PathVariable Long id, @PathVariable String status) {
-        return service.updateStatus(id, status);
+    @PutMapping("/{id}/approve")
+    public Leave approveLeave(@PathVariable Long id) {
+        return service.updateStatus(id, "APPROVED");
+    }
+
+    @PutMapping("/{id}/reject")
+    public Leave rejectLeave(@PathVariable Long id) {
+        return service.updateStatus(id, "REJECTED");
     }
 
     @DeleteMapping("/{id}")
