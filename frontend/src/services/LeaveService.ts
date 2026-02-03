@@ -11,8 +11,8 @@ export interface Leave {
     proof?: string;
 }
 
-const API_HOST = process.env.REACT_APP_API_URL || "http://localhost:8080";
-const BASE_URL = `${API_HOST}/api/leaves`;
+// const API_HOST = process.env.REACT_APP_API_URL || "http://localhost:8080";
+const BASE_URL = "/api/leaves";
 
 class LeaveService {
     getAllLeaves() {
