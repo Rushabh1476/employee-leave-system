@@ -8,8 +8,8 @@ function LeaveForm({ addLeave }) {
   const [proof, setProof] = useState(""); // Base64 string yahan store hogi
   const [isSubmitHover, setIsSubmitHover] = useState(false); // Hover State
 
-  // LocalStorage se logged user nikalna
-  const loggedUser = JSON.parse(localStorage.getItem("loggedUser") || "{}");
+  // LocalStorage se logged user nikalna (key: 'user')
+  const loggedUser = JSON.parse(localStorage.getItem("user") || "{}");
 
   // File ko Base64 mein badalne ka function
   const handleFileChange = (e) => {

@@ -10,7 +10,7 @@ function App() {
 
   // 🔹 Load logged-in user
   useEffect(() => {
-    const savedUser = JSON.parse(localStorage.getItem("loggedUser"));
+    const savedUser = JSON.parse(localStorage.getItem("user"));
     if (savedUser) {
       setUser(savedUser);
     }
@@ -18,13 +18,13 @@ function App() {
 
   // 🔹 Save user on login
   const handleLogin = (userData) => {
-    localStorage.setItem("loggedUser", JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem("loggedUser");
-    setUser(null);localStorage.removeItem("user"); localStorage.removeItem("user");
+    localStorage.removeItem("user");
+    setUser(null);
   };
 
   return (

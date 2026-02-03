@@ -19,7 +19,8 @@ public class LeaveService {
 
     public Leave applyLeave(Leave leave) {
     	
-        leave.setStatus("PENDING");
+        // Use capitalized 'Pending' to match frontend display
+        leave.setStatus("Pending");
         return repo.save(leave);
     }
 

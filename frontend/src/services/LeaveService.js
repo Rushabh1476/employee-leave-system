@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "https://employee-leave-app.onrender.com/api/leaves";
+const API_HOST = process.env.REACT_APP_API_URL || "http://localhost:8080";
+const BASE_URL = `${API_HOST}/api/leaves`;
 
 
 class LeaveService {
@@ -16,11 +17,11 @@ getEmployeeLeaves(name) {
 }
 
   approveLeave(id) {
-    return axios.put(`${BASE_URL}/${id}/approve`);
+    return axios.put(`${BASE_URL}/${id}/Approved`);
   }
 
   rejectLeave(id) {
-    return axios.put(`${BASE_URL}/${id}/reject`);
+    return axios.put(`${BASE_URL}/${id}/Rejected`);
   }
 
   deleteLeave(id) {
