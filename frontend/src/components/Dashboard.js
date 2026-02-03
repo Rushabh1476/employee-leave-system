@@ -11,25 +11,64 @@ function Dashboard({ user, logout }) {
   const isEmp = u?.role === "EMPLOYEE";
   const isAdmin = u?.role === "ADMIN";
   useEffect(() => {
-    const fetchData = () => {
+    // Load cached data first (so refresh shows data immediately)
+    try {
+      const cachedLeaves = JSON.parse(localStorage.getItem("leaves"));
+      const cachedAll = JSON.parse(localStorage.getItem("allHistory"));
+      if (isEmp && Array.isArray(cachedLeaves)) setLeaves(cachedLeaves);
+      if (isAdmin && Array.isArray(cachedAll)) setAllHistory(cachedAll);
+    } catch (err) {
+      console.error('Failed to read cache', err);
+    }
+
+    const fetchData = async () => {
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       const name = u?.username || storedUser.username;
-      if (isEmp && name) {
-        LeaveService.getEmployeeLeaves(name).then((res) => setLeaves(res.data || [])).catch(console.error);
-      }
-      if (isAdmin) {
-        LeaveService.getAllLeaves().then((res) => setAllHistory(res.data || [])).catch(console.error);
+      try {
+        if (isEmp && name) {
+          const res = await LeaveService.getEmployeeLeaves(name);
+          const data = res.data || [];
+          setLeaves(data);
+          localStorage.setItem('leaves', JSON.stringify(data));
+        }
+        if (isAdmin) {
+          const res = await LeaveService.getAllLeaves();
+          const data = res.data || [];
+          setAllHistory(data);
+          localStorage.setItem('allHistory', JSON.stringify(data));
+        }
+      } catch (err) {
+        console.error(err);
       }
     };
     fetchData();
     if (isAdmin) { const inv = setInterval(fetchData, 4000); return () => clearInterval(inv); }
   }, [isEmp, isAdmin, u.username]);
   const addLeave = (s) => setLeaves((p) => [...p, s]);
+  // persist add
+  const addLeaveAndPersist = (s) => {
+    setLeaves((p) => {
+      const next = [...p, s];
+      try { localStorage.setItem('leaves', JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+  };
   const updateStatus = (id, s) => {
     (s === "Approved" ? LeaveService.approveLeave(id) : LeaveService.rejectLeave(id)).then(() => {
       setAllHistory((p) => p.map((l) => (l.id === id ? { ...l, status: s } : l)));
       setLeaves((p) => p.map((l) => (l.id === id ? { ...l, status: s } : l)));
+      try { localStorage.setItem('allHistory', JSON.stringify(allHistory.map(l => l.id===id ? {...l, status: s} : l))); } catch(e){}
+      try { const updated = (JSON.parse(localStorage.getItem('leaves')||'[]')).map(l => l.id===id ? {...l, status:s} : l); localStorage.setItem('leaves', JSON.stringify(updated)); } catch(e){}
     });
+  };
+  const deleteLeave = (id) => {
+    LeaveService.deleteLeave(id).then(() => {
+      setLeaves((p) => {
+        const next = p.filter(l => l.id !== id);
+        try { localStorage.setItem('leaves', JSON.stringify(next)); } catch(e){}
+        return next;
+      });
+    }).catch(console.error);
   };
   return (
     <div style={{ minHeight: "100vh", padding: "30px", backgroundImage: "url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2069')", backgroundSize: "cover", backgroundAttachment: "fixed" }}>

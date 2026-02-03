@@ -44,7 +44,7 @@ function LeaveForm({ addLeave }) {
 
       const res = await LeaveService.applyLeave(payload);
       
-      // Dashboard state update karne ke liye
+      // Dashboard state update karne ke liye (parent persists to localStorage)
       addLeave(res.data);
 
       alert("Leave Applied Successfully ✅");
