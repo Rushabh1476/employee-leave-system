@@ -18,7 +18,7 @@ public class Leave {
     private String status;
 
     @Lob 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String proof;
 
     // Getters & Setters

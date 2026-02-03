@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Leave } from "../services/LeaveService";
 
 interface LeaveHistoryProps {
@@ -11,6 +11,11 @@ interface LeaveHistoryProps {
 }
 
 const LeaveHistory: React.FC<LeaveHistoryProps> = ({ leaves = [], isAdmin, isEmployee, updateStatus, onDelete }) => {
+    const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
+
+    const openImage = (img: string) => setSelectedImage(img);
+    const closeImage = () => setSelectedImage(undefined);
+
     return (
         <div style={{ marginTop: "20px" }}>
             <h3 style={{ textAlign: "center" }}>Leave History ({leaves.length})</h3>
@@ -22,7 +27,7 @@ const LeaveHistory: React.FC<LeaveHistoryProps> = ({ leaves = [], isAdmin, isEmp
                             leaves.map(l => (
                                 <tr key={l.id}>
                                     <td>{l.employeeName}</td><td>{l.date}</td><td>{l.reason}</td>
-                                    <td>{l.proof ? <img src={l.proof} alt="proof" style={{ width: "50px", height: "50px", objectFit: "cover", cursor: "pointer" }} onClick={() => window.open(l.proof, "_blank")} /> : "No Proof"}</td>
+                                    <td>{l.proof ? <img src={l.proof} alt="proof" style={{ width: "50px", height: "50px", objectFit: "cover", cursor: "pointer" }} onClick={() => openImage(l.proof as string)} /> : "No Proof"}</td>
                                     <td><b style={{ color: l.status === "Approved" ? "green" : l.status === "Rejected" ? "red" : "blue" }}>{l.status}</b></td>
                                     <td>
                                         {isAdmin && l.status === "Pending" && updateStatus && (
@@ -39,7 +44,20 @@ const LeaveHistory: React.FC<LeaveHistoryProps> = ({ leaves = [], isAdmin, isEmp
                     </tbody>
                 </table>
             </div>
-        </div>
+
+
+            {/* Image Modal */}
+            {
+                selectedImage && (
+                    <div className="modal-overlay" onClick={closeImage}>
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <span className="close-btn" onClick={closeImage}>&times;</span>
+                            <img src={selectedImage} alt="Proof Full" style={{ maxWidth: "100%", maxHeight: "80vh", borderRadius: "8px" }} />
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 }
 export default LeaveHistory;
