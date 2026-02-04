@@ -107,6 +107,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 try { localStorage.setItem('leaves', JSON.stringify(updated)); } catch (e) { }
                 return updated;
             });
+        }).catch(err => {
+            console.error("Action failed:", err);
+            alert("Failed to update leave status. Please checking connection. ❌");
         });
     };
 

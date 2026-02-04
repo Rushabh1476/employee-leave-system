@@ -11,9 +11,12 @@ export interface Leave {
     proof?: string;
 }
 
-// Use current machine IP if running locally
-const API_HOST = window.location.hostname === "localhost" ? "http://localhost:8080" : `http://${window.location.hostname}:8080`;
-const BASE_URL = `${API_HOST}/api/leaves`;
+// Smart Base URL:
+// 1. If "localhost" or IP address (common for local dev), use port 8080.
+// 2. If a domain name (Prod/Netlify), use relative path to use the proxy.
+const isLocal = window.location.hostname === "localhost" || window.location.hostname.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/);
+const API_HOST = isLocal ? `http://${window.location.hostname}:8080` : "";
+const BASE_URL = isLocal ? `${API_HOST}/api/leaves` : "/api/leaves";
 
 class LeaveService {
     getAllLeaves() {
