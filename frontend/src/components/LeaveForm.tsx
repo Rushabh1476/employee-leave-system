@@ -3,9 +3,11 @@ import LeaveService, { Leave } from "../services/LeaveService";
 
 interface LeaveFormProps {
     addLeave: (leave: Leave) => void;
+    replaceLeave?: (tempId: number, realLeave: Leave) => void;
+    removeLeave?: (id: number) => void;
 }
 
-const LeaveForm: React.FC<LeaveFormProps> = ({ addLeave }) => {
+const LeaveForm: React.FC<LeaveFormProps> = ({ addLeave, replaceLeave, removeLeave }) => {
     const [date, setDate] = useState<string>("");
     const [days, setDays] = useState<number>(1);
     const [reason, setReason] = useState<string>("");
@@ -34,32 +36,42 @@ const LeaveForm: React.FC<LeaveFormProps> = ({ addLeave }) => {
             return;
         }
 
+        const tempId = Date.now();
+        const payload: Leave = {
+            id: tempId,
+            employeeName: loggedUser.username,
+            date: date,
+            days: Number(days),
+            reason: reason,
+            proof: proof,
+            status: "Pending"
+        };
+
+        // Optimistic Update: Show immediately
+        addLeave(payload);
+        alert("Leave Applied Successfully (Syncing...) ⏳");
+
+        // Reset form immediately
+        setDate("");
+        setDays(1);
+        setReason("");
+        setProof("");
+
         try {
-            const payload: Leave = {
-                employeeName: loggedUser.username,
-                date: date,
-                days: Number(days),
-                reason: reason,
-                proof: proof,
-                status: "Pending"
-            };
+            // Actual API Call
+            const res = await LeaveService.applyLeave({ ...payload, id: undefined }); // Don't send temp ID to backend
 
-            const res = await LeaveService.applyLeave(payload);
+            // Replace temp ID with real ID
+            if (replaceLeave) replaceLeave(tempId, res.data);
 
-            // Update parent state (which should persist to localStorage)
-            addLeave(res.data);
-
-            alert("Leave Applied Successfully ✅");
-
-            // Reset form
-            setDate("");
-            setDays(1);
-            setReason("");
-            setProof("");
+            // Optional: Update alert or let user know sync finished? 
+            // Usually optimistic UI implies silent success if no error.
 
         } catch (err) {
             console.error(err);
-            alert("Error applying leave ❌");
+            alert("Error syncing leave. Please try again. ❌");
+            // Rollback
+            if (removeLeave) removeLeave(tempId);
         }
     };
 

@@ -57,10 +57,29 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         };
         fetchData();
         if (isAdmin) {
-            const inv = setInterval(fetchData, 4000);
+            // Polling every 2 seconds for near real-time updates
+            const inv = setInterval(fetchData, 2000);
             return () => clearInterval(inv);
         }
     }, [isEmp, isAdmin, u.username]);
+
+    // Optimistic UI Helper: Replace temp ID with real ID from server
+    const replaceLeave = (tempId: number, realLeave: Leave) => {
+        setLeaves((prev) => {
+            const updated = prev.map(l => (l.id === tempId ? realLeave : l));
+            localStorage.setItem('leaves', JSON.stringify(updated));
+            return updated;
+        });
+    };
+
+    // Remove leave (for optimistic rollback on error)
+    const removeLeave = (id: number) => {
+        setLeaves((p) => {
+            const updated = p.filter(l => l.id !== id);
+            localStorage.setItem('leaves', JSON.stringify(updated));
+            return updated;
+        });
+    };
 
     // FIX: Persist to localStorage when adding a leave
     const addLeave = (s: Leave) => {
@@ -113,7 +132,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                             <h1>Employee Dashboard</h1>
                             <p style={{ fontSize: "28px", fontWeight: "800" }}>Welcome <span style={{ background: "linear-gradient(90deg,#ffeb3b,#00e5ff,#ff4081)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{u.username}</span></p>
                         </div>
-                        <LeaveForm addLeave={addLeave} />
+                        <LeaveForm addLeave={addLeave} replaceLeave={replaceLeave} removeLeave={removeLeave} />
                         <LeaveHistory leaves={leaves} isEmployee={true} onDelete={deleteLeave} />
                     </div>
                 )}
