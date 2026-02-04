@@ -18,6 +18,18 @@ const isLocal = window.location.hostname === "localhost" || window.location.host
 const API_HOST = isLocal ? `http://${window.location.hostname}:8080` : "";
 const BASE_URL = isLocal ? `${API_HOST}/api/leaves` : "/api/leaves";
 
+// Add retry logic for 504 (Cold Start)
+axios.interceptors.response.use(null, async (error) => {
+    const { config, response } = error;
+    if (response && response.status === 504 && !config.__isRetry) {
+        config.__isRetry = true;
+        console.log("Backend 504 detected (Cold Start). Retrying in 3s...");
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        return axios(config);
+    }
+    return Promise.reject(error);
+});
+
 class LeaveService {
     getAllLeaves() {
         return axios.get<Leave[]>(BASE_URL);

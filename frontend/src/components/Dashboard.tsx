@@ -18,6 +18,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     const [allHistory, setAllHistory] = useState<Leave[]>([]);
     const [showAllHistory, setShowAllHistory] = useState<boolean>(false);
     const [isHover, setIsHover] = useState<boolean>(false);
+    const [serverError, setServerError] = useState<string | null>(null);
 
     // Fallback if prop user is missing, though App.js should provide it
     const u = user || JSON.parse(localStorage.getItem("user") || "{}");
@@ -51,8 +52,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                     setAllHistory(data);
                     localStorage.setItem('allHistory', JSON.stringify(data));
                 }
+                setServerError(null); // Clear error on success
             } catch (err) {
                 console.error(err);
+                setServerError("Backend is sleeping or unreachable (504). Please wait ~30s if using Render Free Tier.");
             }
         };
         fetchData();
@@ -129,6 +132,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                 <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px" }}>
                     <button onClick={logout} onMouseEnter={() => setIsHover(true)} onMouseLeave={() => setIsHover(false)} style={{ padding: "8px 18px", borderRadius: "6px", background: isHover ? "#b71c1c" : "#e53935", color: "#fff", border: "none", cursor: "pointer", fontWeight: "600" }}>Logout</button>
                 </div>
+                {serverError && (
+                    <div style={{ background: "#ffebee", color: "#c62828", padding: "15px", borderRadius: "8px", marginBottom: "20px", textAlign: "center", border: "1px solid #ef9a9a" }}>
+                        <strong>⚠️ {serverError}</strong>
+                    </div>
+                )}
                 {isEmp && (
                     <div style={{ textAlign: "center" }}>
                         <div style={{ padding: "28px", borderRadius: "16px", marginBottom: "25px", background: "linear-gradient(135deg,#2c3e50,#4ca1af)", color: "#fff" }}>

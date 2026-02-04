@@ -8,7 +8,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/leaves")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"*", "https://roaring-biscochitos-7296a2.netlify.app"})
 public class LeaveController {
 
     private final LeaveService service;
