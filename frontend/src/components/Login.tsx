@@ -16,9 +16,9 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
         }
 
         // 🔒 ADMIN AUTHENTICATION
-        if (role === "ADMIN") {
-            if (username === "admin" && password === "admin123") {
-                setUser({ username, role: "ADMIN" });
+        if (username.toLowerCase() === "admin") {
+            if (password === "admin123") {
+                setUser({ username: username.toLowerCase(), role: "ADMIN" });
             } else {
                 alert("❌ Invalid Admin credentials");
             }
@@ -28,6 +28,7 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
         // ✅ EMPLOYEE LOGIN
         setUser({ username, role: "EMPLOYEE" });
     };
+
 
     return (
         <div
