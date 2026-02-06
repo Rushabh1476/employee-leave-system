@@ -69,7 +69,8 @@ const LeaveForm: React.FC<LeaveFormProps> = ({ addLeave, replaceLeave, removeLea
 
         } catch (err) {
             console.error(err);
-            alert("Error syncing leave. Please try again. ❌");
+            console.error(err);
+            alert("❌ Submission FAILED. Backend is unreachable.\nThe request has been cancelled. Please check your connection or try again later.");
             // Rollback
             if (removeLeave) removeLeave(tempId);
         }

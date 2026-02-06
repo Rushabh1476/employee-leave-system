@@ -19,13 +19,18 @@ const API_HOST = isLocal ? `http://${window.location.hostname}:8080` : "";
 const BASE_URL = isLocal ? `${API_HOST}/api/leaves` : "/api/leaves";
 
 // Add retry logic for 504 (Cold Start)
+// Add robust retry logic for 504 (Cold Start) - Up to 5 retries (approx 60s coverage)
 axios.interceptors.response.use(null, async (error) => {
     const { config, response } = error;
-    if (response && response.status === 504 && !config.__isRetry) {
-        config.__isRetry = true;
-        console.log("Backend 504 detected (Cold Start). Retrying in 3s...");
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        return axios(config);
+    if (response && response.status === 504) {
+        config.__retryCount = config.__retryCount || 0;
+        if (config.__retryCount < 5) {
+            config.__retryCount++;
+            const delay = config.__retryCount * 3000; // 3s, 6s, 9s, 12s, 15s (Exponential-ish)
+            console.log(`Backend 504 (Cold Start). Retry ${config.__retryCount}/5 in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return axios(config);
+        }
     }
     return Promise.reject(error);
 });
