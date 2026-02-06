@@ -9,6 +9,8 @@ interface User {
     role: string;
 }
 
+import AdminDashboard from "./components/AdminDashboard";
+
 const App: React.FC = () => {
     const [user, setUser] = useState<User | null>(() => {
         const saved = localStorage.getItem("user");
@@ -38,11 +40,14 @@ const App: React.FC = () => {
         <>
             {!user ? (
                 <Login setUser={handleLogin} />
+            ) : user.role === "ADMIN" ? (
+                <AdminDashboard user={user} logout={logout} />
             ) : (
                 <Dashboard user={user} logout={logout} />
             )}
         </>
     );
 }
+
 
 export default App;

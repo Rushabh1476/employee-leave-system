@@ -22,9 +22,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("https://shiny-lokum-fec05a.netlify.app", "http://localhost:3000")
+                .allowedOrigins("https://shiny-lokum-fec05a.netlify.app")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
     }
+
 }

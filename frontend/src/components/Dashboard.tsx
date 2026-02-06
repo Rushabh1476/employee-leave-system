@@ -15,56 +15,39 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
     const [leaves, setLeaves] = useState<Leave[]>([]);
-    const [allHistory, setAllHistory] = useState<Leave[]>([]);
-    const [showAllHistory, setShowAllHistory] = useState<boolean>(false);
     const [isHover, setIsHover] = useState<boolean>(false);
     const [serverError, setServerError] = useState<string | null>(null);
 
-    // Fallback if prop user is missing, though App.js should provide it
+    // Get user from local storage
     const u = user || JSON.parse(localStorage.getItem("user") || "{}");
-    const isEmp = u?.role === "EMPLOYEE";
-    const isAdmin = u?.role === "ADMIN";
 
     useEffect(() => {
-        // Load cached data first (so refresh shows data immediately)
+        // Load cached data
         try {
             const cachedLeaves = JSON.parse(localStorage.getItem("leaves") || "null");
-            const cachedAll = JSON.parse(localStorage.getItem("allHistory") || "null");
-            if (isEmp && Array.isArray(cachedLeaves)) setLeaves(cachedLeaves);
-            if (isAdmin && Array.isArray(cachedAll)) setAllHistory(cachedAll);
+            if (Array.isArray(cachedLeaves)) setLeaves(cachedLeaves);
         } catch (err) {
             console.error('Failed to read cache', err);
         }
 
         const fetchData = async () => {
-            const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-            const name = u?.username || storedUser.username;
+            const name = u?.username;
             try {
-                if (isEmp && name) {
+                if (name) {
                     const res = await LeaveService.getEmployeeLeaves(name);
                     const data = res.data || [];
                     setLeaves(data);
                     localStorage.setItem('leaves', JSON.stringify(data));
                 }
-                if (isAdmin) {
-                    const res = await LeaveService.getAllLeaves();
-                    const data = res.data || [];
-                    setAllHistory(data);
-                    localStorage.setItem('allHistory', JSON.stringify(data));
-                }
-                setServerError(null); // Clear error on success
+                setServerError(null);
             } catch (err) {
                 console.error(err);
-                setServerError("Backend is sleeping or unreachable (504). Please wait ~30s if using Render Free Tier.");
+                setServerError("Backend is sleeping or unreachable. Please wait ~30s if using Render Free Tier.");
             }
         };
         fetchData();
-        if (isAdmin) {
-            // Polling every 2 seconds for near real-time updates
-            const inv = setInterval(fetchData, 2000);
-            return () => clearInterval(inv);
-        }
-    }, [isEmp, isAdmin, u.username]);
+    }, [u.username]);
+
 
     // Optimistic UI Helper: Replace temp ID with real ID from server
     const replaceLeave = (tempId: number, realLeave: Leave) => {
@@ -97,24 +80,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         });
     };
 
-    const updateStatus = (id: number, s: string) => {
-        (s === "Approved" ? LeaveService.approveLeave(id) : LeaveService.rejectLeave(id)).then(() => {
-            setAllHistory((p) => {
-                const updated = p.map((l) => (l.id === id ? { ...l, status: s } : l));
-                try { localStorage.setItem('allHistory', JSON.stringify(updated)); } catch (e) { }
-                return updated;
-            });
-            // Also update 'leaves' if meaningful
-            setLeaves((p) => {
-                const updated = p.map((l) => (l.id === id ? { ...l, status: s } : l));
-                try { localStorage.setItem('leaves', JSON.stringify(updated)); } catch (e) { }
-                return updated;
-            });
-        }).catch(err => {
-            console.error("Action failed:", err);
-            alert("Failed to update leave status. Please checking connection. ❌");
-        });
-    };
 
     const deleteLeave = (id: number) => {
         LeaveService.deleteLeave(id).then(() => {
@@ -137,28 +102,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                         <strong>⚠️ {serverError}</strong>
                     </div>
                 )}
-                {isEmp && (
-                    <div style={{ textAlign: "center" }}>
-                        <div style={{ padding: "28px", borderRadius: "16px", marginBottom: "25px", background: "linear-gradient(135deg,#2c3e50,#4ca1af)", color: "#fff" }}>
-                            <h1>Employee Dashboard</h1>
-                            <p style={{ fontSize: "28px", fontWeight: "800" }}>Welcome <span style={{ background: "linear-gradient(90deg,#ffeb3b,#00e5ff,#ff4081)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{u.username}</span></p>
-                        </div>
-                        <LeaveForm addLeave={addLeave} replaceLeave={replaceLeave} removeLeave={removeLeave} />
-                        <LeaveHistory leaves={leaves} isEmployee={true} onDelete={deleteLeave} />
+                <div style={{ textAlign: "center" }}>
+                    <div style={{ padding: "28px", borderRadius: "16px", marginBottom: "25px", background: "linear-gradient(135deg,#2c3e50,#4ca1af)", color: "#fff" }}>
+                        <h1>Employee Dashboard</h1>
+                        <p style={{ fontSize: "28px", fontWeight: "800" }}>Welcome <span style={{ background: "linear-gradient(90deg,#ffeb3b,#00e5ff,#ff4081)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{u.username}</span></p>
                     </div>
-                )}
-                {isAdmin && (
-                    <div>
-                        <div style={{ padding: "22px", borderRadius: "12px", marginBottom: "25px", background: "#ffffff", border: "1px solid #e0e0e0", textAlign: "center" }}>
-                            <h1>Admin Dashboard</h1>
-                            <p>Welcome <strong>{u.username}</strong></p>
-                        </div>
-                        <button onClick={() => setShowAllHistory(!showAllHistory)} style={{ marginBottom: "20px", padding: "10px 20px", borderRadius: "6px", background: "#ffffff", color: "#1976d2", border: "1px solid #1976d2", cursor: "pointer", fontWeight: "600" }}>{showAllHistory ? "Current Leaves" : "All History"}</button>
-                        <LeaveHistory leaves={showAllHistory ? allHistory : allHistory.filter(l => l.status === "Pending")} isAdmin={!showAllHistory} isAdminHistory={showAllHistory} updateStatus={updateStatus} />
-                    </div>
-                )}
+                    <LeaveForm addLeave={addLeave} replaceLeave={replaceLeave} removeLeave={removeLeave} />
+                    <LeaveHistory leaves={leaves} isEmployee={true} onDelete={deleteLeave} />
+                </div>
             </div>
         </div>
     );
 }
+
 export default Dashboard;

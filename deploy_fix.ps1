@@ -1,32 +1,17 @@
-# One-Shot Build and Deploy Script for Windows
+# deploy_fix.ps1
+Write-Host "🚀 Starting Deployment Fix..." -ForegroundColor Cyan
 
-Write-Output "Starting Build and Deploy Process..."
-
-# 1. Build Backend
-Write-Output "Building Backend (Maven)..."
-cd backend
-if ($?) {
-    .\mvnw.cmd clean package -DskipTests
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Backend Build Failed!"
-        exit 1
-    }
-    cd ..
-} else {
-    Write-Error "Could not find backend directory!"
-    exit 1
-}
-
-# 2. Push to GitHub
-Write-Output "Pushing to GitHub..."
+# 1. Stage all changes
+Write-Host "📦 Staging changes..." -ForegroundColor Yellow
 git add .
-git commit -m "Fix: One-Shot Supabase Config (Clean EnvVars)"
+
+# 2. Commit changes
+$commitMsg = "Fix: Database connection pool limits, CORS updates, and Admin sync fix"
+Write-Host "💾 Committing: $commitMsg" -ForegroundColor Yellow
+git commit -m $commitMsg
+
+# 3. Push to main
+Write-Host "📤 Pushing to GitHub..." -ForegroundColor Yellow
 git push origin main
 
-if ($LASTEXITCODE -eq 0) {
-    Write-Output "Build and Push Successful! Check Render Dashboard."
-} else {
-    Write-Error "Git Push Failed!"
-}
-
-Read-Host -Prompt "Press Enter to exit"
+Write-Host "✅ Fixes deployed! Wait for Render to rebuild." -ForegroundColor Green
