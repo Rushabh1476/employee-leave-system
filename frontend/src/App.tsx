@@ -40,11 +40,17 @@ const App: React.FC = () => {
         <>
             {!user ? (
                 <Login setUser={handleLogin} />
-            ) : user.role?.trim().toUpperCase() === "ADMIN" ? (
-                <AdminDashboard user={user} logout={logout} />
             ) : (
-                <Dashboard user={user} logout={logout} />
+                (() => {
+                    const r = user.role?.toString().toUpperCase().trim();
+                    console.log("Current User Role:", r);
+                    if (r === "ADMIN") {
+                        return <AdminDashboard user={user} logout={logout} />;
+                    }
+                    return <Dashboard user={user} logout={logout} />;
+                })()
             )}
+
 
         </>
     );

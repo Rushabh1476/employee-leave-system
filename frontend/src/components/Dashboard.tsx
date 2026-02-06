@@ -20,6 +20,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
 
     // Get user from local storage
     const u = user || JSON.parse(localStorage.getItem("user") || "{}");
+    const isAdmin = u?.role?.toString().toUpperCase().trim() === "ADMIN";
 
     useEffect(() => {
         // Load cached data
@@ -33,8 +34,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
         const fetchData = async () => {
             const name = u?.username;
             try {
-                if (name) {
+                if (name && !isAdmin) {
                     const res = await LeaveService.getEmployeeLeaves(name);
+
                     const data = res.data || [];
                     setLeaves(data);
                     localStorage.setItem('leaves', JSON.stringify(data));
@@ -102,7 +104,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logout }) => {
                         <strong>⚠️ {serverError}</strong>
                     </div>
                 )}
+                {isAdmin && (
+                    <div style={{ background: "#e3f2fd", color: "#0d47a1", padding: "15px", borderRadius: "8px", marginBottom: "20px", textAlign: "center", border: "1px solid #bbdefb" }}>
+                        <strong>Note: You are logged in as Admin.</strong><br />
+                        <button onClick={() => { localStorage.clear(); window.location.reload(); }} style={{ marginTop: "10px", padding: "8px 15px", background: "#1976d2", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer" }}>
+                            RESET SESSION & GO TO ADMIN DASHBOARD
+                        </button>
+                    </div>
+                )}
+
                 <div style={{ textAlign: "center" }}>
+
                     <div style={{ padding: "28px", borderRadius: "16px", marginBottom: "25px", background: "linear-gradient(135deg,#2c3e50,#4ca1af)", color: "#fff" }}>
                         <h1>Employee Dashboard</h1>
                         <p style={{ fontSize: "28px", fontWeight: "800" }}>Welcome <span style={{ background: "linear-gradient(90deg,#ffeb3b,#00e5ff,#ff4081)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{u.username}</span></p>
