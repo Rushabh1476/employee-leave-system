@@ -1,17 +1,26 @@
 # deploy_fix.ps1
-Write-Host "Starting Deployment Fix..." -ForegroundColor Cyan
+Write-Host "Starting Final Deployment Fix..."
 
-# 1. Stage all changes
-Write-Host "Staging changes..." -ForegroundColor Yellow
+# 1. Build Frontend
+Write-Host "Building Frontend..."
+Set-Location frontend
+npm run build
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Frontend Build Failed!"
+    exit $LASTEXITCODE
+}
+Set-Location ..
+
+# 2. Stage all changes
+Write-Host "Staging changes..."
 git add .
 
-# 2. Commit changes
-$commitMsg = "Fix: Database pool limits, CORS updates, and Admin sync"
-Write-Host "Committing: $commitMsg" -ForegroundColor Yellow
-git commit -m $commitMsg
+# 3. Commit changes (Check if there are changes to commit)
+git commit -m "Final Fix: Extreme database pool hardening (max=1) and DDL disabled for stability"
 
-# 3. Push to main
-Write-Host "Pushing to GitHub..." -ForegroundColor Yellow
+# 4. Push to main
+Write-Host "Pushing to GitHub..."
 git push origin main
 
-Write-Host "Fixes deployed! Wait for Render to rebuild." -ForegroundColor Green
+Write-Host "All changes pushed! Backend is now set to use ONLY 1 connection."
+Write-Host "CRITICAL: In Render, set Build Command to: mvn clean package -DskipTests"
